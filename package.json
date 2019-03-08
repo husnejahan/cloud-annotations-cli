@@ -1,0 +1,14 @@
+{
+  "name": "cloud-annotations-cli",
+  "version": "1.0.0",
+  "license": "MIT",
+  "scripts": {},
+  "bin": {
+    "cacli": "bin/cacli"
+  },
+  "devDependencies": {},
+  "dependencies": {
+    "request": "^2.88.0",
+    "request-promise-native": "^1.0.7"
+  }
+}
