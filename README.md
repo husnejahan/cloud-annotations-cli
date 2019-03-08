@@ -39,7 +39,7 @@ username: ***
 password: ***
 url: (https://us-south.ml.cloud.ibm.com)
 
-Cloud Annotations Credentials
+Cloud Object Storage Credentials
 access_key_id: ***
 secret_access_key: ***
 region: (us-geo)

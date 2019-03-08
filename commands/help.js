@@ -1,14 +1,8 @@
-const b = string => {
-  return `\x1b[1m${string}\x1b[0m`
-}
-
-const d = string => {
-  return `\x1b[2m${string}\x1b[0m`
-}
+const p = require('./../paint.js')
 
 // TODO: Make this dynamic
 module.exports = options => {
-  const title = `${b('C')}${d('loud')} ${b('A')}${d('nnotations')} ${b('CLI')}`
+  const title = `C${p.d('loud')} A${p.d('nnotations')} CLI`
   console.log(`┌───────────────────────┐
 │ ${title} │
 │ version 0.0.1         │

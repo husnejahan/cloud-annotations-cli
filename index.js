@@ -1,22 +1,16 @@
 const request = require('request-promise-native')
 const argParse = require('./argParse.js')
 const help = require('./commands/help.js')
+const init = require('./commands/init.js')
+const train = require('./commands/train.js')
 
 module.exports = () => {
   const args = argParse()
 
   args.add('', help)
   args.add('help', help)
-
-  args.add('init', function(options) {
-    console.log('init')
-    console.log(options)
-  })
-
-  args.add('train', function(options) {
-    console.log('train')
-    console.log(options)
-  })
+  args.add('init', init)
+  args.add('train', train)
 
   args.parse()
 }
