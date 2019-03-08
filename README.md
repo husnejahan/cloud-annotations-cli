@@ -107,7 +107,7 @@ Would you like to monitor this training run? (yes)
 ```
 $ cacli train
 No config.yaml found, so we will ask you a bunch of questions instead.
-Your answers can optionally be saved in a config.yaml file, for later use.
+Your answers can optionally be saved in a config.yaml file for later use.
 
 (ask cacli init questions)
 
