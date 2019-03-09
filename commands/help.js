@@ -1,4 +1,4 @@
-const p = require('./../paint.js')
+const p = require('./../utils/paint.js')
 
 // TODO: Make this dynamic
 module.exports = options => {

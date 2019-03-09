@@ -1,5 +1,5 @@
-const p = require('./../paint.js')
-const input = require('./../input.js')
+const p = require('../utils/paint.js')
+const input = require('../utils/input.js')
 const yaml = require('js-yaml')
 const fs = require('fs')
 
