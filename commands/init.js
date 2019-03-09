@@ -11,19 +11,26 @@ async function printBuckets({ region, access_key_id, secret_access_key }) {
     secretAccessKey: secret_access_key
   }
   const cos = new COS.S3(config)
-  await cos
+  return await cos
     .listBuckets()
     .promise()
-    .then(data => {
-      if (data.Buckets != null) {
-        for (var i = 0; i < data.Buckets.length; i++) {
-          console.log(`  ${i + 1}) ${data.Buckets[i].Name}`)
-        }
-      }
-    })
+    .then(data =>
+      data.Buckets.map((bucket, i) => {
+        console.log(`  ${i + 1}) ${bucket.Name}`)
+        return bucket.Name
+      })
+    )
     .catch(e => {
       console.error(`ERROR: ${e.code} - ${e.message}\n`)
     })
+}
+
+const sanitize = (choice, buckets) => {
+  if (isNaN(choice) || +choice <= 0 || +choice > buckets.length) {
+    return choice
+  } else {
+    return buckets[+choice - 1]
+  }
 }
 
 const safeGet = (fn, defaultVal) => {
@@ -63,6 +70,8 @@ module.exports = async options => {
     'It only covers the most common items, and tries to guess sensible defaults.'
   )
   console.log()
+
+  // Watson Machine Learning Credentials
   console.log(p.b('Watson Machine Learning Credentials'))
   const instance_id = safeGet(() => old.credentials.wml.instance_id)
   config.credentials.wml.instance_id = await input('instance_id: ', instance_id)
@@ -73,6 +82,8 @@ module.exports = async options => {
   const url = safeGet(() => old.credentials.wml.url, DEFAULT_URL)
   config.credentials.wml.url = await input(`url: `, url)
   console.log()
+
+  // Cloud Object Storage Credentials
   console.log(p.b('Cloud Object Storage Credentials'))
   const access_key_id = safeGet(() => old.credentials.cos.access_key_id)
   config.credentials.cos.access_key_id = await input(
@@ -87,11 +98,13 @@ module.exports = async options => {
   const region = safeGet(() => old.credentials.cos.region, DEFAULT_REGION)
   config.credentials.cos.region = await input(`region: `, region)
   console.log()
+
+  // Buckets
   console.log('loading buckets...')
-  await printBuckets(config.credentials.cos)
+  const buckets = await printBuckets(config.credentials.cos)
   const training = safeGet(() => old.buckets.training)
-  config.buckets.training =
-    (await input('training data bucket: ', training)) || DEFAULT_BUCKET
+  const rawTraining = await input('training data bucket: ', training)
+  config.buckets.training = sanitize(rawTraining, buckets) || DEFAULT_BUCKET
   console.log()
   const use_output = stringToBool(
     await input(
@@ -101,18 +114,23 @@ module.exports = async options => {
   )
   await (async () => {
     if (use_output) {
+      console.log()
       const output = safeGet(() => old.buckets.output)
-      config.buckets.output =
-        (await input('output bucket: ', output)) || DEFAULT_BUCKET
+      const rawOutput = await input('output bucket: ', output)
+      config.buckets.output = sanitize(rawOutput, buckets) || DEFAULT_BUCKET
     }
   })()
   console.log()
+
+  // Training Params
   console.log(p.b('Training Params'))
   const gpu = safeGet(() => old.trainingParams.gpu, DEFAULT_GPU)
   config.trainingParams.gpu = await input(`gpu: `, gpu)
   const steps = safeGet(() => old.trainingParams.steps, DEFAULT_STEPS)
   config.trainingParams.steps = await input(`steps: `, steps)
   console.log()
+
+  // Write to yaml
   config.name = await input(`project name: `, config.buckets.training)
   console.log()
   console.log(`About to write to ${process.cwd()}/config.yaml:`)
