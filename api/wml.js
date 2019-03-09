@@ -1,4 +1,10 @@
 const request = require('request-promise-native')
+
+module.exports = () => {
+  return {
+    authent: ''
+  }
+}
 // const STEPS = 50
 // const GPU = 'v100x2'
 // const TRAINING_BUCKET = 'pepsi-coke-mountain-dew'

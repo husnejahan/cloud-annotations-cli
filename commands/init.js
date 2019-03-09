@@ -2,10 +2,36 @@ const p = require('../utils/paint.js')
 const input = require('../utils/input.js')
 const yaml = require('js-yaml')
 const fs = require('fs')
+const COS = require('ibm-cos-sdk')
 
-// TODO: call object storage.
-async function printBuckets() {
-  return await input('  1) fake-bucket')
+async function printBuckets({ region, access_key_id, secret_access_key }) {
+  const config = {
+    endpoint: `https://s3-api.${region}.objectstorage.softlayer.net`,
+    accessKeyId: access_key_id,
+    secretAccessKey: secret_access_key
+  }
+  const cos = new COS.S3(config)
+  await cos
+    .listBuckets()
+    .promise()
+    .then(data => {
+      if (data.Buckets != null) {
+        for (var i = 0; i < data.Buckets.length; i++) {
+          console.log(`  ${i + 1}) ${data.Buckets[i].Name}`)
+        }
+      }
+    })
+    .catch(e => {
+      console.error(`ERROR: ${e.code} - ${e.message}\n`)
+    })
+}
+
+const safeGet = (fn, defaultVal) => {
+  try {
+    return fn()
+  } catch (e) {
+    return defaultVal
+  }
 }
 
 const stringToBool = string =>
@@ -20,64 +46,80 @@ const DEFAULT_STEPS = '500'
 const DEFAULT_SAVE = 'yes'
 
 module.exports = async options => {
+  const old = (() => {
+    try {
+      return yaml.safeLoad(fs.readFileSync('config.yaml'))
+    } catch {}
+  })()
   const config = {}
   config.name = ''
   config.credentials = {}
+  config.credentials.wml = {}
+  config.credentials.cos = {}
+  config.buckets = {}
+  config.trainingParams = {}
   console.log('This utility will walk you through creating a config.yaml file.')
   console.log(
     'It only covers the most common items, and tries to guess sensible defaults.'
   )
   console.log()
   console.log(p.b('Watson Machine Learning Credentials'))
-  config.credentials.wml = {}
-  config.credentials.wml.instance_id = await input('instance_id: ')
-  config.credentials.wml.username = await input('username: ')
-  config.credentials.wml.password = await input('password: ')
-  config.credentials.wml.url =
-    (await input(`url: (${DEFAULT_URL}) `)) || DEFAULT_URL
+  const instance_id = safeGet(() => old.credentials.wml.instance_id)
+  config.credentials.wml.instance_id = await input('instance_id: ', instance_id)
+  const username = safeGet(() => old.credentials.wml.username)
+  config.credentials.wml.username = await input('username: ', username)
+  const password = safeGet(() => old.credentials.wml.password)
+  config.credentials.wml.password = await input('password: ', password)
+  const url = safeGet(() => old.credentials.wml.url, DEFAULT_URL)
+  config.credentials.wml.url = await input(`url: `, url)
   console.log()
   console.log(p.b('Cloud Object Storage Credentials'))
-  config.credentials.cos = {}
-  config.credentials.cos.access_key_id = await input('access_key_id: ')
-  config.credentials.cos.secret_access_key = await input('secret_access_key: ')
-  config.credentials.cos.region =
-    (await input(`region: (${DEFAULT_REGION}) `)) || DEFAULT_REGION
+  const access_key_id = safeGet(() => old.credentials.cos.access_key_id)
+  config.credentials.cos.access_key_id = await input(
+    'access_key_id: ',
+    access_key_id
+  )
+  const secret_access_key = safeGet(() => old.credentials.cos.secret_access_key)
+  config.credentials.cos.secret_access_key = await input(
+    'secret_access_key: ',
+    secret_access_key
+  )
+  const region = safeGet(() => old.credentials.cos.region, DEFAULT_REGION)
+  config.credentials.cos.region = await input(`region: `, region)
   console.log()
   console.log('loading buckets...')
-  await printBuckets()
-  config.buckets = {}
+  await printBuckets(config.credentials.cos)
+  const training = safeGet(() => old.buckets.training)
   config.buckets.training =
-    (await input('training data bucket: ')) || DEFAULT_BUCKET
+    (await input('training data bucket: ', training)) || DEFAULT_BUCKET
   console.log()
   const use_output = stringToBool(
-    (await input(
-      `Would you like to store output in a separate bucket? (${DEFAULT_USE_OUTPUT}) `
-    )) || DEFAULT_USE_OUTPUT
+    await input(
+      `Would you like to store output in a separate bucket? `,
+      DEFAULT_USE_OUTPUT
+    )
   )
   await (async () => {
     if (use_output) {
-      config.buckets.output = (await input('output bucket: ')) || DEFAULT_BUCKET
+      const output = safeGet(() => old.buckets.output)
+      config.buckets.output =
+        (await input('output bucket: ', output)) || DEFAULT_BUCKET
     }
   })()
   console.log()
   console.log(p.b('Training Params'))
-  config.trainingParams = {}
-  config.trainingParams.gpu =
-    (await input(`gpu: (${DEFAULT_GPU}) `)) || DEFAULT_GPU
-  config.trainingParams.steps =
-    (await input(`steps: (${DEFAULT_STEPS}) `)) || DEFAULT_STEPS
+  const gpu = safeGet(() => old.trainingParams.gpu, DEFAULT_GPU)
+  config.trainingParams.gpu = await input(`gpu: `, gpu)
+  const steps = safeGet(() => old.trainingParams.steps, DEFAULT_STEPS)
+  config.trainingParams.steps = await input(`steps: `, steps)
   console.log()
-  config.name =
-    (await input(`project name: (${config.buckets.training}) `)) ||
-    config.buckets.training
+  config.name = await input(`project name: `, config.buckets.training)
   console.log()
   console.log(`About to write to ${process.cwd()}/config.yaml:`)
   console.log()
   const yamlFile = yaml.safeDump(config)
   console.log(yamlFile)
-  const save = stringToBool(
-    (await input(`Is this ok? (${DEFAULT_SAVE}) `)) || DEFAULT_SAVE
-  )
+  const save = stringToBool(await input(`Is this ok? `, DEFAULT_SAVE))
   if (save) {
     fs.writeFile('config.yaml', yamlFile, () => {})
   }
