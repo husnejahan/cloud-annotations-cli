@@ -5,10 +5,12 @@ const WML = require('./../api/wml')
 module.exports = async options => {
   const config = yaml.safeLoad(fs.readFileSync('config.yaml'))
   console.log('(Using settings from config.yaml)')
+  // TODO: check model status before opening a socket.
+  const modelId = options[0]
 
-  const ws = await new WML(config).createMonitorSocket('model-gkpdwekl')
+  const ws = await new WML(config).createMonitorSocket(modelId)
   ws.on('open', function open() {
-    console.log(`Monitoring ${'model-gkpdwekl'}...`)
+    console.log(`Monitoring ${modelId}...`)
   })
 
   ws.on('close', function close() {
