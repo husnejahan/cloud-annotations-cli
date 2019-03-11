@@ -4,8 +4,13 @@ const WML = require('./../api/wml')
 
 module.exports = async options => {
   const config = yaml.safeLoad(fs.readFileSync('config.yaml'))
-  const wml = new WML(config.credentials.wml)
-  const trainingDefinition = await wml.createTrainingDefinition(config.name)
-  await wml.addTrainingScript(trainingDefinition)
-  await wml.startTrainingRun(trainingDefinition, config)
+  console.log('Using settings from config.yaml')
+  const trainingRun = WML.trainingRunBuilder(config)
+  console.log('Starting training run...')
+  const modelId = await trainingRun.start()
+  console.log()
+  console.log('Model ID:')
+  console.log(`┌──${'─'.repeat(modelId.length)}──┐`)
+  console.log(`│  ${modelId}  │`)
+  console.log(`└──${'─'.repeat(modelId.length)}──┘`)
 }

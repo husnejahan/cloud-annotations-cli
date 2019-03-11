@@ -1,34 +1,56 @@
 const request = require('request-promise-native')
 
 class WML {
-  constructor({ instance_id, username, password, url }) {
+  constructor(config) {
     this._token = undefined
-    this._instanceId = instance_id
-    this._username = username
-    this._password = password
-    this._url = url
+    this._config = config
+  }
+
+  static trainingRunBuilder(config) {
+    return new WML(config)
+  }
+
+  async start() {
+    const trainingDefinition = await this.createTrainingDefinition()
+    await this.addTrainingScript(trainingDefinition)
+    const trainingRun = await this.startTrainingRun(trainingDefinition)
+    return trainingRun.metadata.guid
   }
 
   async authenticate() {
     return request({
       method: 'GET',
       json: true,
-      url: `${this._url}/v3/identity/token`,
+      url: `${this._config.credentials.wml.url}/v3/identity/token`,
       auth: {
-        user: this._username,
-        pass: this._password
+        user: this._config.credentials.wml.username,
+        pass: this._config.credentials.wml.password
       }
     }).then(body => {
       return body.token
     })
   }
 
-  async createTrainingDefinition(name) {
+  async listTrainingRuns() {
+    if (!this._token) {
+      this._token = await this.authenticate()
+    }
+    return request({
+      method: 'get',
+      json: true,
+      url: `${this._config.credentials.wml.url}/v3/models`,
+      auth: {
+        bearer: this._token
+      }
+    })
+  }
+
+  async createTrainingDefinition() {
     if (!this._token) {
       this._token = await this.authenticate()
     }
     const trainingDefinition = {
-      name: name,
+      name: this._config.name,
       framework: {
         name: 'tensorflow',
         version: '1.12',
@@ -43,7 +65,9 @@ class WML {
     return request({
       method: 'POST',
       json: true,
-      url: `${this._url}/v3/ml_assets/training_definitions`,
+      url: `${
+        this._config.credentials.wml.url
+      }/v3/ml_assets/training_definitions`,
       auth: {
         bearer: this._token
       },
@@ -72,16 +96,16 @@ class WML {
     )
   }
 
-  async startTrainingRun(trainingDefinition, config) {
+  async startTrainingRun(trainingDefinition) {
     if (!this._token) {
       this._token = await this.authenticate()
     }
     const connection = {
       endpoint_url: `https://s3-api.${
-        config.credentials.cos.region
+        this._config.credentials.cos.region
       }.objectstorage.service.networklayer.com`,
-      access_key_id: config.credentials.cos.access_key_id,
-      secret_access_key: config.credentials.cos.secret_access_key
+      access_key_id: this._config.credentials.cos.access_key_id,
+      secret_access_key: this._config.credentials.cos.secret_access_key
     }
     const trainingRun = {
       model_definition: {
@@ -89,31 +113,33 @@ class WML {
           name: trainingDefinition.entity.framework.name,
           version: trainingDefinition.entity.framework.version
         },
-        name: config.name,
+        name: this._config.name,
         author: {},
         definition_href: trainingDefinition.metadata.url,
         execution: {
           command: `python3 -m wml.train_command --num-train-steps=${
-            config.trainingParams.steps
+            this._config.trainingParams.steps
           }`,
-          compute_configuration: { name: config.trainingParams.gpu }
+          compute_configuration: { name: this._config.trainingParams.gpu }
         }
       },
       training_data_reference: {
         connection: connection,
-        source: { bucket: config.buckets.training },
+        source: { bucket: this._config.buckets.training },
         type: 's3'
       },
       training_results_reference: {
         connection: connection,
-        target: { bucket: config.buckets.output || config.buckets.training },
+        target: {
+          bucket: this._config.buckets.output || this._config.buckets.training
+        },
         type: 's3'
       }
     }
     return request({
       method: 'POST',
       json: true,
-      url: `${this._url}/v3/models`,
+      url: `${this._config.credentials.wml.url}/v3/models`,
       auth: {
         bearer: this._token
       },
