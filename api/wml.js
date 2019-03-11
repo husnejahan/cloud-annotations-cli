@@ -96,6 +96,7 @@ class WML {
     if (!this._token) {
       this._token = await this.authenticate()
     }
+    // TODO: Look at bucket to determine which zip to load.
     return request(
       'https://github.com/cloud-annotations/cloud-annotations-sdk/releases/download/v0.0.1-beta/object_detection.zip'
     ).pipe(
