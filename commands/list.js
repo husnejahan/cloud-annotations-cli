@@ -7,7 +7,7 @@ const Table = require('./../utils/table')
 
 module.exports = async options => {
   const config = yaml.safeLoad(fs.readFileSync('config.yaml'))
-  console.log('Using settings from config.yaml')
+  console.log('(Using settings from config.yaml)')
   const wml = new WML(config)
   const runs = await wml.listTrainingRuns()
 
@@ -58,6 +58,8 @@ module.exports = async options => {
             return { color: fg, lum: x => x }
           case 'error':
             return { color: fr, lum: d }
+          default:
+            return { color: x => x, lum: x => x }
         }
       })()
 

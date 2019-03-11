@@ -40,26 +40,35 @@ module.exports = class Table {
       if (!column.colorFunc) {
         column.colorFunc = input => input
       }
-      const pad = (() => {
+      const [pad, trim] = (() => {
         if (width) {
-          return width - stringLength(value)
+          const pad = width - stringLength(value)
+          return [Math.max(pad, 0), Math.min(pad, 0)]
         } else {
-          return sparePadding / flexColumns.length
+          const pad = sparePadding / flexColumns.length
+          return [Math.max(pad, 0), Math.min(pad, 0)]
+        }
+      })()
+      const val = (() => {
+        if (trim < 0) {
+          return value.slice(0, trim - 3) + '...'
+        } else {
+          return value
         }
       })()
       switch (align) {
         case 'right':
-          this._table += column.colorFunc(`${' '.repeat(pad)}${value}`)
+          this._table += column.colorFunc(`${' '.repeat(pad)}${val}`)
           break
         case 'center':
           const half = pad / 2
           const mod = pad % 2
           this._table += column.colorFunc(
-            `${' '.repeat(half)}${value}${' '.repeat(half + mod)}`
+            `${' '.repeat(half)}${val}${' '.repeat(half + mod)}`
           )
           break
         default:
-          this._table += column.colorFunc(`${value}${' '.repeat(pad)}`)
+          this._table += column.colorFunc(`${val}${' '.repeat(pad)}`)
           break
       }
       if (i < row.length - 1) {
