@@ -58,6 +58,8 @@ module.exports = async options => {
             return { color: fg, lum: x => x }
           case 'error':
             return { color: fr, lum: d }
+          case 'canceled':
+            return { color: d, lum: d }
           default:
             return { color: x => x, lum: x => x }
         }
