@@ -73,11 +73,3 @@ module.exports = async options => {
 
   console.log(table.toString())
 }
-// 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789
-// --------------------------------------------------------------------------------|
-// name                               model id          status            submitted
-// tf-object-detection_training-run   model-60sclfap    completed        3 days ago
-// pepsi-coke-mountain-dew            model-81nbbdrw    completed       2 hours ago
-//                                                                   20 minutes ago
-//                                                                      a month ago
-//                                                                         just now
