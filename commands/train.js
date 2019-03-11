@@ -3,9 +3,7 @@ const fs = require('fs')
 const WML = require('./../api/wml')
 const monitor = require('./../commands/monitor.js')
 const input = require('./../utils/input.js')
-
-const stringToBool = string =>
-  string.toLowerCase() === 'y' || string.toLowerCase() === 'yes'
+const stringToBool = require('./../utils/stringToBool.js')
 
 module.exports = async options => {
   const config = yaml.safeLoad(fs.readFileSync('config.yaml'))

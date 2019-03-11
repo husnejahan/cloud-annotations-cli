@@ -3,6 +3,7 @@ const input = require('./../utils/input.js')
 const yaml = require('js-yaml')
 const fs = require('fs')
 const COS = require('ibm-cos-sdk')
+const stringToBool = require('./../utils/stringToBool.js')
 
 async function printBuckets({ region, access_key_id, secret_access_key }) {
   const config = {
@@ -40,9 +41,6 @@ const safeGet = (fn, defaultVal) => {
     return defaultVal
   }
 }
-
-const stringToBool = string =>
-  string.toLowerCase() === 'y' || string.toLowerCase() === 'yes'
 
 const DEFAULT_URL = 'https://us-south.ml.cloud.ibm.com'
 const DEFAULT_REGION = 'us-geo'
