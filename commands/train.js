@@ -21,6 +21,7 @@ module.exports = async options => {
     await input(`Would you like to monitor this training run? `, 'yes')
   )
   if (shouldMonitor) {
+    console.log()
     await monitor([modelId])
   }
 }

@@ -10,11 +10,24 @@ module.exports = async options => {
 
   const ws = await new WML(config).createMonitorSocket(modelId)
   ws.on('open', function open() {
-    console.log(`Monitoring ${modelId}...`)
+    console.log()
+    console.log(`────────────${'─'.repeat(modelId.length)}────────`)
+    console.log()
+    console.log(`   Monitoring ${modelId}...`)
+    console.log()
+    console.log(`────────────${'─'.repeat(modelId.length)}────────`)
+    console.log()
   })
 
   ws.on('close', function close() {
     console.log('Log monitor done.')
+    console.log()
+    console.log(`───────────────────────`)
+    console.log()
+    console.log('   Log monitor done.')
+    console.log()
+    console.log(`───────────────────────`)
+    console.log()
   })
 
   ws.on('message', function message(message) {

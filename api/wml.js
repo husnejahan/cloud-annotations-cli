@@ -98,7 +98,7 @@ class WML {
     }
     // TODO: Look at bucket to determine which zip to load.
     return request(
-      'https://github.com/cloud-annotations/cloud-annotations-sdk/releases/download/v0.0.1-beta/object_detection.zip'
+      'https://github.com/cloud-annotations/training/releases/download/v0.0.1-alpha/training.zip'
     ).pipe(
       request({
         method: 'PUT',
