@@ -1,4 +1,5 @@
 const request = require('request-promise-native')
+const WebSocket = require('ws')
 
 class WML {
   constructor(config) {
@@ -28,6 +29,22 @@ class WML {
       }
     }).then(body => {
       return body.token
+    })
+  }
+
+  async createMonitorSocket(model_id) {
+    if (!this._token) {
+      this._token = await this.authenticate()
+    }
+    const url =
+      this._config.credentials.wml.url.replace('https', 'wss') +
+      '/v3/models/' +
+      model_id +
+      '/monitor'
+    return new WebSocket(url, {
+      headers: {
+        Authorization: `bearer ${this._token}`
+      }
     })
   }
 
