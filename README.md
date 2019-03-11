@@ -8,12 +8,11 @@ $ cacli
 Usage: cacli <command>
 
 where <command> is one of:
-    init         Interactively create a config.yaml file
-    train        Start a training run
-    monitor      Monitor the progress of a training run (alias: watch)
-    stop         Stop a training run
-    list         List all training runs
-    download     Download a trained model
+  init         Interactively create a config.yaml file
+  train        Start a training run
+  monitor      Monitor the progress of a training run (alias: watch)
+  list         List all training runs
+  download     Download a trained model
 
 cacli <cmd> -h     quick help on <cmd>
 ```
@@ -22,8 +21,7 @@ cacli <cmd> -h     quick help on <cmd>
 $ cacli <cmd> -h
 cacli init [--force|-f|--yes|-y]
 cacli train [<config_path>] [--gpu <k80|k80x2|k80x4|v100|v100x2>] [--steps <steps>]
-cacli watch [<training_run_id>]
-cacli stop [<training_run_id>]
+cacli monitor [<training_run_id>]
 cacli list
 cacli download [<training_run_id>] [--saved-model] [--tflite] [--tfjs] [--coreml]
 ```
@@ -82,19 +80,8 @@ Is this ok? (yes)
 
 ```
 $ cacli train
-Using settings from config.yaml
+(Using settings from config.yaml)
 Starting training run...
-
-(Not sure which of these are important yet)
-Training ID
-┌────────────────────────────────────────┐
-│  2a2241a9-ccc2-415d-a92e-dfeb0594278d  │
-└────────────────────────────────────────┘
-
-model_location:
-┌──────────────────────┐
-│  training-wI330pjig  │
-└──────────────────────┘
 
 Model ID:
 ┌──────────────────┐
@@ -115,10 +102,10 @@ Your answers can optionally be saved in a config.yaml file for later use.
 
 Starting training run...
 
-model_location:
-┌──────────────────────┐
-│  training-wI330pjig  │
-└──────────────────────┘
+Model ID:
+┌──────────────────┐
+│  model-lfm9zc32  │
+└──────────────────┘
 
 Would you like to monitor this training run? (yes)
 ```
