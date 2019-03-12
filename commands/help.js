@@ -1,8 +1,8 @@
-const p = require('./../utils/paint.js')
+const { dim } = require('chalk')
 
 // TODO: Make this dynamic
 module.exports = options => {
-  const title = `C${p.d('loud')} A${p.d('nnotations')} CLI`
+  const title = `C${dim('loud')} A${dim('nnotations')} CLI`
   console.log(`┌───────────────────────┐
 │ ${title} │
 │ version 0.0.1         │

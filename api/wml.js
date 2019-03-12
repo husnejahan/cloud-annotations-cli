@@ -1,5 +1,6 @@
 const request = require('request-promise-native')
 const WebSocket = require('ws')
+const fs = require('fs')
 
 class WML {
   constructor(config) {
@@ -74,7 +75,7 @@ class WML {
         runtimes: [
           {
             name: 'python',
-            version: '3.5'
+            version: '3.6'
           }
         ]
       }
@@ -96,9 +97,8 @@ class WML {
     if (!this._token) {
       this._token = await this.authenticate()
     }
-    // TODO: Look at bucket to determine which zip to load.
     return request(
-      'https://github.com/cloud-annotations/training/releases/download/v0.0.1-alpha/training.zip'
+      'https://github.com/cloud-annotations/training/releases/download/v0.0.2-alpha/training.zip'
     ).pipe(
       request({
         method: 'PUT',

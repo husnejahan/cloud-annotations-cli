@@ -2,7 +2,7 @@ const yaml = require('js-yaml')
 const fs = require('fs')
 const moment = require('moment')
 const WML = require('./../api/wml')
-const { fr, fg, d, b } = require('./../utils/paint')
+const { red, green, bold, dim } = require('chalk')
 const Table = require('./../utils/table')
 
 module.exports = async options => {
@@ -35,10 +35,10 @@ module.exports = async options => {
     maxWidth: process.stdout.columns
   })
   table.addRow([
-    { value: 'name', colorFunc: b },
-    { value: 'model id', width: '14', align: 'center', colorFunc: b },
-    { value: 'status', width: '11', align: 'center', colorFunc: b },
-    { value: 'submitted', width: '14', align: 'right', colorFunc: b }
+    { value: 'name', colorFunc: bold },
+    { value: 'model id', width: '14', align: 'center', colorFunc: bold },
+    { value: 'status', width: '11', align: 'center', colorFunc: bold },
+    { value: 'submitted', width: '14', align: 'right', colorFunc: bold }
   ])
   runs.resources
     .sort(
@@ -55,11 +55,11 @@ module.exports = async options => {
       c = (() => {
         switch (status) {
           case 'completed':
-            return { color: fg, lum: x => x }
+            return { color: green, lum: x => x }
           case 'error':
-            return { color: fr, lum: d }
+            return { color: red, lum: dim }
           case 'canceled':
-            return { color: d, lum: d }
+            return { color: dim, lum: dim }
           default:
             return { color: x => x, lum: x => x }
         }

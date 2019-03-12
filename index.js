@@ -4,6 +4,7 @@ const init = require('./commands/init.js')
 const train = require('./commands/train.js')
 const list = require('./commands/list.js')
 const monitor = require('./commands/monitor.js')
+const download = require('./commands/download.js')
 
 module.exports = () => {
   const args = argParse()
@@ -14,6 +15,7 @@ module.exports = () => {
   args.add('train', train)
   args.add('list', list)
   args.add('monitor', monitor)
+  args.add('download', download)
 
   args.parse()
 }

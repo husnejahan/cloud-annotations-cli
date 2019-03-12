@@ -1,4 +1,4 @@
-const p = require('./../utils/paint.js')
+const { bold } = require('chalk')
 const input = require('./../utils/input.js')
 const yaml = require('js-yaml')
 const fs = require('fs')
@@ -70,7 +70,7 @@ module.exports = async options => {
   console.log()
 
   // Watson Machine Learning Credentials
-  console.log(p.b('Watson Machine Learning Credentials'))
+  console.log(bold('Watson Machine Learning Credentials'))
   const instance_id = safeGet(() => old.credentials.wml.instance_id)
   config.credentials.wml.instance_id = await input('instance_id: ', instance_id)
   const username = safeGet(() => old.credentials.wml.username)
@@ -82,7 +82,7 @@ module.exports = async options => {
   console.log()
 
   // Cloud Object Storage Credentials
-  console.log(p.b('Cloud Object Storage Credentials'))
+  console.log(bold('Cloud Object Storage Credentials'))
   const access_key_id = safeGet(() => old.credentials.cos.access_key_id)
   config.credentials.cos.access_key_id = await input(
     'access_key_id: ',
@@ -121,7 +121,7 @@ module.exports = async options => {
   console.log()
 
   // Training Params
-  console.log(p.b('Training Params'))
+  console.log(bold('Training Params'))
   const gpu = safeGet(() => old.trainingParams.gpu, DEFAULT_GPU)
   config.trainingParams.gpu = await input(`gpu: `, gpu)
   const steps = safeGet(() => old.trainingParams.steps, DEFAULT_STEPS)
