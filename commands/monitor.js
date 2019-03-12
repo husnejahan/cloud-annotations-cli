@@ -1,9 +1,8 @@
-const yaml = require('js-yaml')
-const fs = require('fs')
 const WML = require('./../api/wml')
+const loadConfig = require('./../utils/loadConfig')
 
 module.exports = async options => {
-  const config = yaml.safeLoad(fs.readFileSync('config.yaml'))
+  const config = loadConfig()
   console.log('(Using settings from config.yaml)')
   // TODO: Check model status before opening a socket.
   const modelId = options[0]

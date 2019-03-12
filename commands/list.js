@@ -1,12 +1,11 @@
-const yaml = require('js-yaml')
-const fs = require('fs')
 const moment = require('moment')
 const WML = require('./../api/wml')
+const loadConfig = require('./../utils/loadConfig')
 const { red, green, bold, dim } = require('chalk')
 const Table = require('./../utils/table')
 
 module.exports = async options => {
-  const config = yaml.safeLoad(fs.readFileSync('config.yaml'))
+  const config = loadConfig()
   console.log('(Using settings from config.yaml)')
   const wml = new WML(config)
   const runs = await wml.listTrainingRuns()

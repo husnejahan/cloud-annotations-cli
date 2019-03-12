@@ -1,10 +1,10 @@
-const yaml = require('js-yaml')
 const fs = require('fs-extra')
+const loadConfig = require('./../utils/loadConfig')
 const WML = require('./../api/wml')
 const COS = require('ibm-cos-sdk')
 
 module.exports = async options => {
-  const config = yaml.safeLoad(fs.readFileSync('config.yaml'))
+  const config = loadConfig()
   console.log('(Using settings from config.yaml)')
   const modelId = options[0]
 
