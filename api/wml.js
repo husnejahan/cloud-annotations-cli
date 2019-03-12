@@ -49,6 +49,20 @@ class WML {
     })
   }
 
+  async getTrainingRun(model_id) {
+    if (!this._token) {
+      this._token = await this.authenticate()
+    }
+    https: return request({
+      method: 'get',
+      json: true,
+      url: `${this._config.credentials.wml.url}/v3/models/${model_id}`,
+      auth: {
+        bearer: this._token
+      }
+    })
+  }
+
   async listTrainingRuns() {
     if (!this._token) {
       this._token = await this.authenticate()

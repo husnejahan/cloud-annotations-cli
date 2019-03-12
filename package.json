@@ -9,6 +9,7 @@
   "devDependencies": {},
   "dependencies": {
     "chalk": "^2.4.2",
+    "fs-extra": "^7.0.1",
     "ibm-cos-sdk": "^1.4.4",
     "js-yaml": "^3.12.2",
     "moment": "^2.24.0",
