@@ -4,6 +4,7 @@ const yaml = require('js-yaml')
 const fs = require('fs')
 const COS = require('ibm-cos-sdk')
 const stringToBool = require('./../utils/stringToBool.js')
+const optionsParse = require('./../utils/optionsParse')
 
 async function printBuckets({ region, access_key_id, secret_access_key }) {
   const config = {

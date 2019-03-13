@@ -3,6 +3,7 @@ const monitor = require('./../commands/monitor')
 const input = require('./../utils/input')
 const loadConfig = require('./../utils/loadConfig')
 const stringToBool = require('./../utils/stringToBool')
+const optionsParse = require('./../utils/optionsParse')
 
 module.exports = async options => {
   const parser = optionsParse()

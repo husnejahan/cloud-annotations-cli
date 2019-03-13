@@ -3,6 +3,7 @@ const WML = require('./../api/wml')
 const loadConfig = require('./../utils/loadConfig')
 const { red, green, bold, dim } = require('chalk')
 const Table = require('./../utils/table')
+const optionsParse = require('./../utils/optionsParse')
 
 module.exports = async options => {
   const parser = optionsParse()
