@@ -1,14 +1,30 @@
 const fs = require('fs-extra')
 const loadConfig = require('./../utils/loadConfig')
+const optionsParse = require('./../utils/optionsParse')
 const WML = require('./../api/wml')
 const COS = require('ibm-cos-sdk')
 
 module.exports = async options => {
+  const parser = optionsParse()
+  parser.add('model_id')
+  parser.add([true, 'help', '--help', '-h'])
+  const ops = parser.parse(options)
+
+  if (ops.help) {
+    console.log('cacli download <model_id>')
+    process.exit()
+  }
+
   const config = loadConfig()
   console.log('(Using settings from config.yaml)')
-  const modelId = options[0]
 
-  const run = await new WML(config).getTrainingRun(modelId)
+  if (!ops.model_id) {
+    console.log('No Model ID provided')
+    console.log('Usage: cacli download <model_id>')
+    process.exit(1)
+  }
+
+  const run = await new WML(config).getTrainingRun(ops.model_id)
 
   const {
     bucket,

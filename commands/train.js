@@ -1,12 +1,20 @@
-const yaml = require('js-yaml')
-const fs = require('fs')
 const WML = require('./../api/wml')
-const monitor = require('./../commands/monitor.js')
-const input = require('./../utils/input.js')
-const stringToBool = require('./../utils/stringToBool.js')
+const monitor = require('./../commands/monitor')
+const input = require('./../utils/input')
+const loadConfig = require('./../utils/loadConfig')
+const stringToBool = require('./../utils/stringToBool')
 
 module.exports = async options => {
-  const config = yaml.safeLoad(fs.readFileSync('config.yaml'))
+  const parser = optionsParse()
+  parser.add([true, 'help', '--help', '-h'])
+  const ops = parser.parse(options)
+
+  if (ops.help) {
+    console.log('cacli train')
+    process.exit()
+  }
+
+  const config = loadConfig()
   console.log('(Using settings from config.yaml)')
   const trainingRun = WML.trainingRunBuilder(config)
   console.log('Starting training run...')

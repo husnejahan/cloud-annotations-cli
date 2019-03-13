@@ -51,6 +51,15 @@ const DEFAULT_STEPS = '500'
 const DEFAULT_SAVE = 'yes'
 
 module.exports = async options => {
+  const parser = optionsParse()
+  parser.add([true, 'help', '--help', '-h'])
+  const ops = parser.parse(options)
+
+  if (ops.help) {
+    console.log('cacli init')
+    process.exit()
+  }
+
   const old = (() => {
     try {
       return yaml.safeLoad(fs.readFileSync('config.yaml'))

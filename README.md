@@ -20,10 +20,10 @@ cacli <cmd> -h     quick help on <cmd>
 ```
 $ cacli <cmd> -h
 cacli init [--force|-f|--yes|-y]
-cacli train [<config_path>] [--gpu <k80|k80x2|k80x4|v100|v100x2>] [--steps <steps>]
-cacli monitor [<training_run_id>]
+cacli train [--gpu <k80|k80x2|k80x4|v100|v100x2>] [--steps <steps>]
+cacli monitor [<model_id>]
 cacli list
-cacli download [<training_run_id>] [--saved-model] [--tflite] [--tfjs] [--coreml]
+cacli download [<model_id>] [--saved-model] [--tflite] [--tfjs] [--coreml]
 ```
 
 ```
