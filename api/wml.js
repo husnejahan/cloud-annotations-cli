@@ -2,6 +2,8 @@ const request = require('request-promise-native')
 const WebSocket = require('ws')
 const fs = require('fs')
 
+const LOCAL_DEV_MODE = false
+
 class WML {
   constructor(config) {
     this._token = undefined
@@ -112,9 +114,8 @@ class WML {
       this._token = await this.authenticate()
     }
 
-    const local = true
     const trainingZip = (() => {
-      if (local) {
+      if (LOCAL_DEV_MODE) {
         return fs.createReadStream('training.zip')
       }
       return request(
