@@ -14,7 +14,8 @@ Usage: cacli <command>
 where <command> is one of:
   init         Interactively create a config.yaml file
   train        Start a training run
-  monitor      Monitor the progress of a training run
+  logs         Monitor the logs of a training run
+  progress     Monitor the progress of a training run
   list         List all training runs
   download     Download a trained model
 

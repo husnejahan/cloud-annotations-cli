@@ -16,7 +16,6 @@ module.exports = async options => {
   }
 
   const config = loadConfig()
-  console.log('(Using settings from config.yaml)')
   const wml = new WML(config)
   const runs = await wml.listTrainingRuns()
 

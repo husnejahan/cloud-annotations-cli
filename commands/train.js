@@ -1,5 +1,5 @@
 const WML = require('./../api/wml')
-const monitor = require('./../commands/monitor')
+const progress = require('./../commands/progress')
 const input = require('./../utils/input')
 const loadConfig = require('./../utils/loadConfig')
 const stringToBool = require('./../utils/stringToBool')
@@ -16,7 +16,6 @@ module.exports = async options => {
   }
 
   const config = loadConfig()
-  console.log('(Using settings from config.yaml)')
 
   console.log('Starting training run...')
   const trainingRun = WML.trainingRunBuilder(config)
@@ -30,11 +29,11 @@ module.exports = async options => {
   console.log()
 
   const shouldMonitor = stringToBool(
-    await input(`Would you like to monitor this training run? `, 'yes')
+    await input(`Would you like to monitor progress? `, 'yes')
   )
 
   if (shouldMonitor) {
     console.log()
-    await monitor([modelId])
+    await progress([modelId], config)
   }
 }

@@ -15,7 +15,6 @@ module.exports = async options => {
   }
 
   const config = loadConfig()
-  console.log('(Using settings from config.yaml)')
 
   if (!ops.model_id) {
     console.log('No Model ID provided')

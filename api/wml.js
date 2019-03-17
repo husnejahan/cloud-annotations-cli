@@ -111,9 +111,18 @@ class WML {
     if (!this._token) {
       this._token = await this.authenticate()
     }
-    return request(
-      'https://github.com/cloud-annotations/training/releases/download/v0.0.2-alpha/training.zip'
-    ).pipe(
+
+    const local = true
+    const trainingZip = (() => {
+      if (local) {
+        return fs.createReadStream('training.zip')
+      }
+      return request(
+        'https://github.com/cloud-annotations/training/releases/download/v0.0.2-alpha/training.zip'
+      )
+    })()
+
+    return trainingZip.pipe(
       request({
         method: 'PUT',
         json: true,
