@@ -12,7 +12,7 @@ module.exports = async (options, importedConfig) => {
   const ops = parser.parse(options)
 
   if (ops.help) {
-    console.log('cacli monitor <model_id>')
+    console.log('cacli progress <model_id>')
     process.exit()
   }
 
@@ -20,7 +20,7 @@ module.exports = async (options, importedConfig) => {
 
   if (!ops.model_id) {
     console.log('No Model ID provided')
-    console.log('Usage: cacli monitor <model_id>')
+    console.log('Usage: cacli progress <model_id>')
     process.exit(1)
   }
 

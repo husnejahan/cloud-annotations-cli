@@ -1,6 +1,6 @@
-const WML = require('./../api/wml')
-const loadConfig = require('./../utils/loadConfig')
-const optionsParse = require('./../utils/optionsParse')
+const WML = require('../api/wml')
+const loadConfig = require('../utils/loadConfig')
+const optionsParse = require('../utils/optionsParse')
 const COS = require('ibm-cos-sdk')
 
 module.exports = async options => {
@@ -10,7 +10,7 @@ module.exports = async options => {
   const ops = parser.parse(options)
 
   if (ops.help) {
-    console.log('cacli monitor <model_id>')
+    console.log('cacli logs <model_id>')
     process.exit()
   }
 
@@ -18,7 +18,7 @@ module.exports = async options => {
 
   if (!ops.model_id) {
     console.log('No Model ID provided')
-    console.log('Usage: cacli monitor <model_id>')
+    console.log('Usage: cacli logs <model_id>')
     process.exit(1)
   }
 
@@ -106,7 +106,3 @@ module.exports = async options => {
     }
   })
 }
-
-// key = run_details["entity"]["training_results_reference"]["location"]["model_location"] + '/learner-1/training-log.txt'
-//             obj = client_cos.get_object(Bucket=bucket, Key=key)
-//             print(obj['Body'].read().decode('utf-8'))
