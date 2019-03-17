@@ -119,7 +119,7 @@ class WML {
         return fs.createReadStream('training.zip')
       }
       return request(
-        'https://github.com/cloud-annotations/training/releases/download/v1.0.3/training.zip'
+        'https://github.com/cloud-annotations/training/releases/download/v1.0.4/training.zip'
       )
     })()
 

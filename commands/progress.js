@@ -79,6 +79,18 @@ module.exports = async (options, importedConfig) => {
             })
           }
 
+          const stepRegex2 = /Step (\d*): Train accuracy/gm
+          while ((m = stepRegex2.exec(message)) !== null) {
+            if (m.index === stepRegex2.lastIndex) {
+              stepRegex2.lastIndex++
+            }
+            m.forEach((match, groupIndex) => {
+              if (groupIndex === 1) {
+                matches.push(match)
+              }
+            })
+          }
+
           const rateRegex = /tensorflow:global_step\/sec: ([\d.]*)/gm
           while ((m = rateRegex.exec(message)) !== null) {
             if (m.index === rateRegex.lastIndex) {
