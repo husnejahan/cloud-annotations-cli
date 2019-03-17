@@ -51,7 +51,7 @@ const DEFAULT_GPU = 'k80'
 const DEFAULT_STEPS = '500'
 const DEFAULT_SAVE = 'yes'
 
-module.exports = async options => {
+module.exports = async (options, skipOptionalSteps) => {
   const parser = optionsParse()
   parser.add([true, 'help', '--help', '-h'])
   const ops = parser.parse(options)
@@ -73,11 +73,16 @@ module.exports = async options => {
   config.credentials.cos = {}
   config.buckets = {}
   config.trainingParams = {}
-  console.log('This utility will walk you through creating a config.yaml file.')
-  console.log(
-    'It only covers the most common items, and tries to guess sensible defaults.'
-  )
-  console.log()
+
+  if (!skipOptionalSteps) {
+    console.log(
+      'This utility will walk you through creating a config.yaml file.'
+    )
+    console.log(
+      'It only covers the most common items, and tries to guess sensible defaults.'
+    )
+    console.log()
+  }
 
   // Watson Machine Learning Credentials
   console.log(bold('Watson Machine Learning Credentials'))
@@ -131,16 +136,25 @@ module.exports = async options => {
   console.log()
 
   // Training Params
-  console.log(bold('Training Params'))
-  const gpu = safeGet(() => old.trainingParams.gpu, DEFAULT_GPU)
-  config.trainingParams.gpu = await input(`gpu: `, gpu)
-  const steps = safeGet(() => old.trainingParams.steps, DEFAULT_STEPS)
-  config.trainingParams.steps = await input(`steps: `, steps)
-  console.log()
+  if (!skipOptionalSteps) {
+    console.log(bold('Training Params'))
+    // Default can end up being '', which won't through a safeGet error.
+    const gpu = safeGet(() => old.trainingParams.gpu, DEFAULT_GPU)
+    config.trainingParams.gpu = await input(`gpu: `, gpu || DEFAULT_GPU)
+    const steps = safeGet(() => old.trainingParams.steps, DEFAULT_STEPS)
+    config.trainingParams.steps = await input(`steps: `, steps || DEFAULT_STEPS)
+    console.log()
+  }
+
+  // Project name
+  if (!skipOptionalSteps) {
+    config.name = await input(`project name: `, config.buckets.training)
+    console.log()
+  } else {
+    config.name = config.buckets.training
+  }
 
   // Write to yaml
-  config.name = await input(`project name: `, config.buckets.training)
-  console.log()
   console.log(`About to write to ${process.cwd()}/config.yaml:`)
   console.log()
   const yamlFile = yaml.safeDump(config)
@@ -149,4 +163,5 @@ module.exports = async options => {
   if (save) {
     fs.writeFile('config.yaml', yamlFile, () => {})
   }
+  return config
 }

@@ -1,7 +1,10 @@
+const { dim } = require('chalk')
+const yaml = require('js-yaml')
+const fs = require('fs')
 const WML = require('./../api/wml')
 const progress = require('./../commands/progress')
+const init = require('./../commands/init')
 const input = require('./../utils/input')
-const loadConfig = require('./../utils/loadConfig')
 const stringToBool = require('./../utils/stringToBool')
 const optionsParse = require('./../utils/optionsParse')
 
@@ -15,7 +18,24 @@ module.exports = async options => {
     process.exit()
   }
 
-  const config = loadConfig()
+  const config = await (async () => {
+    try {
+      const config = yaml.safeLoad(fs.readFileSync('config.yaml'))
+      console.log(dim('(Using settings from config.yaml)'))
+      return config
+    } catch {
+      console.log(
+        'No config.yaml found, so we will ask you a bunch of questions instead.'
+      )
+      console.log(
+        'Your answers can optionally be saved in a config.yaml file for later use.'
+      )
+      console.log()
+      const config = await init([], true)
+      console.log()
+      return config
+    }
+  })()
 
   console.log('Starting training run...')
   const trainingRun = WML.trainingRunBuilder(config)
