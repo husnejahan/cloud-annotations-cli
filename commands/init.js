@@ -1,5 +1,6 @@
 const { bold } = require('chalk')
 const input = require('./../utils/input.js')
+const safeGet = require('./../utils/safeGet')
 const yaml = require('js-yaml')
 const fs = require('fs')
 const COS = require('ibm-cos-sdk')
@@ -32,14 +33,6 @@ const sanitize = (choice, buckets) => {
     return choice
   } else {
     return buckets[+choice - 1]
-  }
-}
-
-const safeGet = (fn, defaultVal) => {
-  try {
-    return fn()
-  } catch (e) {
-    return defaultVal
   }
 }
 

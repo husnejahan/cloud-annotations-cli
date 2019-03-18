@@ -1,8 +1,11 @@
 const request = require('request-promise-native')
 const WebSocket = require('ws')
+const safeGet = require('./../utils/safeGet')
 const fs = require('fs')
 
 const LOCAL_DEV_MODE = false
+const DEFAULT_GPU = 'k80'
+const DEFAULT_STEPS = '500'
 
 class WML {
   constructor(config) {
@@ -159,10 +162,15 @@ class WML {
         author: {},
         definition_href: trainingDefinition.metadata.url,
         execution: {
-          command: `python3 -m wml.train_command --num-train-steps=${
-            this._config.trainingParams.steps
-          }`,
-          compute_configuration: { name: this._config.trainingParams.gpu }
+          command: `python3 -m wml.train_command --num-train-steps=${safeGet(
+            () => this._config.trainingParams.steps,
+            DEFAULT_STEPS
+          ) || DEFAULT_STEPS}`,
+          compute_configuration: {
+            name:
+              safeGet(() => this._config.trainingParams.gpu, DEFAULT_GPU) ||
+              DEFAULT_GPU
+          }
         }
       },
       training_data_reference: {
