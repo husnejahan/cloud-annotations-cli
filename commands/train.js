@@ -1,10 +1,11 @@
-const { dim } = require('chalk')
+const { dim, bold } = require('chalk')
 const yaml = require('js-yaml')
 const fs = require('fs')
 const WML = require('./../api/wml')
 const progress = require('./../commands/progress')
 const init = require('./../commands/init')
 const input = require('./../utils/input')
+const stringLength = require('./../utils/stringLength')
 const stringToBool = require('./../utils/stringToBool')
 const optionsParse = require('./../utils/optionsParse')
 
@@ -43,9 +44,9 @@ module.exports = async options => {
   console.log()
 
   console.log('Model ID:')
-  console.log(`┌─${'─'.repeat(modelId.length)}─┐`)
-  console.log(`│ ${modelId} │`)
-  console.log(`└─${'─'.repeat(modelId.length)}─┘`)
+  console.log(`┌─${'─'.repeat(stringLength(modelId))}─┐`)
+  console.log(`│ ${bold.cyan(modelId)} │`)
+  console.log(`└─${'─'.repeat(stringLength(modelId))}─┘`)
   console.log()
 
   const shouldMonitor = stringToBool(
