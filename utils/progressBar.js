@@ -1,3 +1,5 @@
+const cursorToStart = require('./../utils/cursorToStart')
+const clearLine = require('./../utils/clearLine')
 const bar = ['#', '-']
 
 module.exports = class ProgressBar {
@@ -8,8 +10,8 @@ module.exports = class ProgressBar {
   }
 
   stop() {
-    process.stdout.clearLine()
-    process.stdout.cursorTo(0)
+    clearLine()
+    cursorToStart()
   }
 
   applyRateInfo(rate) {
@@ -56,8 +58,8 @@ module.exports = class ProgressBar {
     const filled = bar[0].repeat(filledLength)
     const empty = bar[1].repeat(width - filledLength)
 
-    process.stdout.clearLine()
-    process.stdout.cursorTo(0)
+    clearLine()
+    cursorToStart()
     process.stdout.write(`[${filled}${empty}]${progress}`)
   }
 }

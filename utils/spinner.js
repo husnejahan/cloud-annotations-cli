@@ -1,3 +1,6 @@
+const cursorToStart = require('./../utils/cursorToStart')
+const clearLine = require('./../utils/clearLine')
+
 const spinner = '⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏'.split('')
 
 module.exports = class Spinner {
@@ -22,8 +25,8 @@ module.exports = class Spinner {
       clearTimeout(this.id)
       this.id = null
     }
-    process.stdout.clearLine()
-    process.stdout.cursorTo(0)
+    clearLine()
+    cursorToStart()
   }
 
   render() {
@@ -32,8 +35,8 @@ module.exports = class Spinner {
     }
     const line = `${spinner[this.current]} ${this.message}`
 
-    process.stdout.clearLine()
-    process.stdout.cursorTo(0)
+    clearLine()
+    cursorToStart()
     process.stdout.write(line)
 
     this.current = ++this.current % spinner.length
