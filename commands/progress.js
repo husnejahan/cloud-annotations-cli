@@ -56,9 +56,10 @@ module.exports = async (options, importedConfig) => {
   }
 
   const ws = await wml.createMonitorSocket(ops.model_id)
-  const spinner = new Spinner()
+
   ws.on('open', () => {})
 
+  const spinner = new Spinner()
   ws.on('close', () => {
     spinner.stop()
     console.log(`${green('success')} Model files saved to bucket.`)
