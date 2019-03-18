@@ -1,9 +1,26 @@
 const { green } = require('chalk')
 const WML = require('./../api/wml')
 const loadConfig = require('./../utils/loadConfig')
+const safeGet = require('./../utils/safeGet')
 const optionsParse = require('./../utils/optionsParse')
 const ProgressBar = require('./../utils/progressBar')
 const Spinner = require('./../utils/spinner')
+
+const getMatches = (string, regex) => {
+  let m
+  const matches = {}
+  while ((m = regex.exec(string)) !== null) {
+    if (m.index === regex.lastIndex) {
+      regex.lastIndex++
+    }
+    m.forEach((match, groupIndex) => {
+      const group = matches[groupIndex] || []
+      group.push(match)
+      matches[groupIndex] = group
+    })
+  }
+  return matches
+}
 
 module.exports = async (options, importedConfig) => {
   const parser = optionsParse()
@@ -39,89 +56,55 @@ module.exports = async (options, importedConfig) => {
   }
 
   const ws = await wml.createMonitorSocket(ops.model_id)
-  ws.on('open', function open() {})
+  const spinner = new Spinner()
+  ws.on('open', () => {})
 
-  const spinnerModel = new Spinner()
-  ws.on('close', function close() {
-    spinnerModel.stop()
+  ws.on('close', () => {
+    spinner.stop()
     console.log(`${green('success')} Model files saved to bucket.`)
     console.log('✨ Done.')
   })
 
-  const spinner = new Spinner()
-  spinner.start()
   spinner.setMessage('Preparing to train (this may take a while)... ')
+  spinner.start()
 
   const totalStepsRegex = /--num-train-steps=(\d*)/gm
-  const totalSteps = totalStepsRegex.exec(
-    run.entity.model_definition.execution.command
-  )[1]
+  const trainingCommand = run.entity.model_definition.execution.command
+  const totalSteps = totalStepsRegex.exec(trainingCommand)[1]
   const progressBar = new ProgressBar(totalSteps)
 
-  let trainingStarted = false
-  ws.on('message', function message(message) {
-    const { status } = JSON.parse(message)
-    if (status) {
-      const { message } = status
-      if (message) {
-        if (message.length > 0) {
-          const stepRegex = /tensorflow:loss = [\d.]*, step = (\d*)/gm
-          let m
-          const matches = []
-          while ((m = stepRegex.exec(message)) !== null) {
-            if (m.index === stepRegex.lastIndex) {
-              stepRegex.lastIndex++
-            }
-            m.forEach((match, groupIndex) => {
-              if (groupIndex === 1) {
-                matches.push(match)
-              }
-            })
-          }
+  ws.on('message', json => {
+    const message = safeGet(() => JSON.parse(json).status.message, false)
+    if (message && message.length > 0) {
+      const objectDetectionStepRegex = /tensorflow:loss = [\d.]*, step = (\d*)/gm
+      const classificationStepRegex = /Step (\d*): Train accuracy/gm
+      const rateRegex = /tensorflow:global_step\/sec: ([\d.]*)/gm
+      const successRegex = /training success/gm
 
-          const stepRegex2 = /Step (\d*): Train accuracy/gm
-          while ((m = stepRegex2.exec(message)) !== null) {
-            if (m.index === stepRegex2.lastIndex) {
-              stepRegex2.lastIndex++
-            }
-            m.forEach((match, groupIndex) => {
-              if (groupIndex === 1) {
-                matches.push(match)
-              }
-            })
-          }
+      const steps =
+        getMatches(message, objectDetectionStepRegex)[1] ||
+        getMatches(message, classificationStepRegex)[1] ||
+        []
 
-          const rateRegex = /tensorflow:global_step\/sec: ([\d.]*)/gm
-          while ((m = rateRegex.exec(message)) !== null) {
-            if (m.index === rateRegex.lastIndex) {
-              rateRegex.lastIndex++
-            }
-            m.forEach((match, groupIndex) => {
-              if (groupIndex === 1) {
-                progressBar.applyRateInfo(match)
-              }
-            })
-          }
+      const rates = getMatches(message, rateRegex)[1] || []
+      rates.forEach(rate => {
+        progressBar.applyRateInfo(rate)
+      })
 
-          const successRegex = /training success/gm
-          m = successRegex.exec(message)
-          if (m && m[0]) {
-            progressBar.stop()
-            console.log(`${green('success')} Training complete.`)
-            spinnerModel.start()
-            spinnerModel.setMessage('Generating model files... ')
-          }
-
-          if (matches.length > 0) {
-            spinner.stop()
-            if (!trainingStarted) {
-              trainingStarted = true
-              console.log(`${green('success')} Training in progress.`)
-            }
-            const maxStep = Math.max(matches)
-            progressBar.update(maxStep)
-          }
+      if (steps.length > 0) {
+        spinner.stop()
+        if (!progressBar.started) {
+          console.log(`${green('success')} Training in progress.`)
         }
+        const largestStep = Math.max(steps)
+        progressBar.update(largestStep)
+      }
+
+      if (getMatches(message, successRegex)[0]) {
+        progressBar.stop()
+        console.log(`${green('success')} Training complete.`)
+        spinner.setMessage('Generating model files... ')
+        spinner.start()
       }
     }
   })

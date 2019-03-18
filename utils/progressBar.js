@@ -7,9 +7,11 @@ module.exports = class ProgressBar {
     this.total = total
     this.current = 0
     this.rateAcc = []
+    this.started = false
   }
 
   stop() {
+    this.started = false
     clearLine()
     cursorToStart()
   }
@@ -29,6 +31,7 @@ module.exports = class ProgressBar {
 
   update(current) {
     this.current = current
+    this.started = true
 
     const rate = this.getAvgRate()
 
