@@ -7,6 +7,8 @@ const logs = require('./commands/logs.js')
 const progress = require('./commands/progress.js')
 const download = require('./commands/download.js')
 
+const testList = require('./commands/testList.js')
+
 module.exports = () => {
   const args = argParse()
 
@@ -18,6 +20,8 @@ module.exports = () => {
   args.add('logs', logs)
   args.add('progress', progress)
   args.add('download', download)
+
+  args.add('test', testList)
 
   args.parse()
 }
