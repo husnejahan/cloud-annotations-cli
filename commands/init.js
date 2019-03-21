@@ -9,6 +9,7 @@ const stringToBool = require('./../utils/stringToBool')
 const optionsParse = require('./../utils/optionsParse')
 const Spinner = require('./../utils/spinner')
 const picker = require('./../utils/picker')
+const { eraseLines } = require('ansi-escapes')
 
 async function listBuckets({ region, access_key_id, secret_access_key }) {
   const config = {
@@ -25,6 +26,30 @@ async function listBuckets({ region, access_key_id, secret_access_key }) {
         return bucket.Name
       })
     )
+}
+
+async function checkRegion(
+  { region, access_key_id, secret_access_key },
+  bucket
+) {
+  const config = {
+    endpoint: `https://s3-api.${region}.objectstorage.softlayer.net`,
+    accessKeyId: access_key_id,
+    secretAccessKey: secret_access_key
+  }
+  const cos = new COS.S3(config)
+  try {
+    const region = await cos
+      .getBucketLocation({ Bucket: bucket })
+      .promise()
+      .then(data => data.LocationConstraint)
+    if (region) {
+      return true
+    }
+    return false
+  } catch {
+    return false
+  }
 }
 
 const DEFAULT_NAME = 'untitled-project'
@@ -113,7 +138,7 @@ module.exports = async (options, skipOptionalSteps) => {
   console.log()
 
   // Buckets
-  spinner.setMessage('Loading buckets...')
+  spinner.setMessage('Authenticating...')
   spinner.start()
 
   let buckets
@@ -167,6 +192,7 @@ module.exports = async (options, skipOptionalSteps) => {
   }
 
   if (buckets) {
+    console.log(bold('Buckets'))
     const training = safeGet(() => old.buckets.training)
     const i = Math.max(0, buckets.indexOf(training))
     CONFIG.buckets.training = await picker(
@@ -178,15 +204,19 @@ module.exports = async (options, skipOptionalSteps) => {
     )
     console.log(`training data bucket: ${CONFIG.buckets.training}`)
     console.log()
+
     const use_output = stringToBool(
       await input(
         'Would you like to store output in a separate bucket? ',
         DEFAULT_USE_OUTPUT
       )
     )
+    process.stdout.write(eraseLines(3))
+    console.log()
+
     await (async () => {
       if (use_output) {
-        console.log()
+        process.stdout.write(eraseLines(2))
         const output = safeGet(() => old.buckets.output)
         const i = Math.max(0, buckets.indexOf(output))
         CONFIG.buckets.output = await picker(
@@ -197,8 +227,49 @@ module.exports = async (options, skipOptionalSteps) => {
           }
         )
         console.log(`output bucket: ${CONFIG.buckets.output}`)
+        console.log()
       }
     })()
+  }
+
+  spinner.setMessage('Checking buckets...')
+  spinner.start()
+
+  let validTraining = true
+  if (CONFIG.buckets.training) {
+    validTraining = await checkRegion(
+      CONFIG.credentials.cos,
+      CONFIG.buckets.training
+    )
+  }
+
+  let validOutput = true
+  if (CONFIG.buckets.output) {
+    validOutput = await checkRegion(
+      CONFIG.credentials.cos,
+      CONFIG.buckets.output
+    )
+  }
+
+  spinner.stop()
+
+  if (!validTraining) {
+    console.warn(
+      `${yellow(
+        'warning'
+      )} The selected training bucket is not in the region \`${
+        CONFIG.credentials.cos.region
+      }\`.`
+    )
+  }
+  if (!validOutput) {
+    console.warn(
+      `${yellow('warning')} The selected output bucket is not in the region \`${
+        CONFIG.credentials.cos.region
+      }\`.`
+    )
+  }
+  if (!validTraining || !validOutput) {
     console.log()
   }
 
