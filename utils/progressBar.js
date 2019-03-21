@@ -2,6 +2,8 @@ const cursorToStart = require('./../utils/cursorToStart')
 const clearLine = require('./../utils/clearLine')
 const bar = ['#', '-']
 
+const MAX_RATE_BUFFER = 20
+
 module.exports = class ProgressBar {
   constructor(total) {
     this.total = total
@@ -18,6 +20,9 @@ module.exports = class ProgressBar {
 
   applyRateInfo(rate) {
     this.rateAcc.push(rate)
+    if (this.rateAcc.length > MAX_RATE_BUFFER) {
+      this.rateAcc.shift()
+    }
   }
 
   getAvgRate() {
