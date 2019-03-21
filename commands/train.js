@@ -16,13 +16,6 @@ const validateConfig = async config => {
   const spinner = new Spinner()
   spinner.setMessage('Validating config...')
   spinner.start()
-  const { region, access_key_id, secret_access_key } = config.credentials.cos
-  const cosConfig = {
-    endpoint: cosEndpointBuilder(region, true),
-    accessKeyId: access_key_id,
-    secretAccessKey: secret_access_key
-  }
-  const cos = new COS.S3(cosConfig)
 
   let errors = false
   try {
@@ -36,6 +29,14 @@ const validateConfig = async config => {
   }
 
   try {
+    const { region, access_key_id, secret_access_key } = config.credentials.cos
+    const cosConfig = {
+      endpoint: cosEndpointBuilder(region, true),
+      accessKeyId: access_key_id,
+      secretAccessKey: secret_access_key
+    }
+    const cos = new COS.S3(cosConfig)
+
     await cos
       .listBuckets()
       .promise()
