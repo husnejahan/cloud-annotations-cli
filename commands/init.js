@@ -1,13 +1,16 @@
-const { bold } = require('chalk')
-const input = require('./../utils/input.js')
+const { dim, bold, yellow } = require('chalk')
+const input = require('./../utils/input')
 const safeGet = require('./../utils/safeGet')
 const yaml = require('js-yaml')
 const fs = require('fs')
 const COS = require('ibm-cos-sdk')
-const stringToBool = require('./../utils/stringToBool.js')
+const WML = require('./../api/wml')
+const stringToBool = require('./../utils/stringToBool')
 const optionsParse = require('./../utils/optionsParse')
+const Spinner = require('./../utils/spinner')
+const picker = require('./../utils/picker')
 
-async function printBuckets({ region, access_key_id, secret_access_key }) {
+async function listBuckets({ region, access_key_id, secret_access_key }) {
   const config = {
     endpoint: `https://s3-api.${region}.objectstorage.softlayer.net`,
     accessKeyId: access_key_id,
@@ -18,61 +21,49 @@ async function printBuckets({ region, access_key_id, secret_access_key }) {
     .listBuckets()
     .promise()
     .then(data =>
-      data.Buckets.map((bucket, i) => {
-        console.log(`  ${i + 1}) ${bucket.Name}`)
+      data.Buckets.map(bucket => {
         return bucket.Name
       })
     )
-    .catch(e => {
-      console.error(`ERROR: ${e.code} - ${e.message}\n`)
-    })
 }
 
-const sanitize = (choice, buckets) => {
-  if (isNaN(choice) || +choice <= 0 || +choice > buckets.length) {
-    return choice
-  } else {
-    return buckets[+choice - 1]
-  }
-}
-
-const DEFAULT_URL = 'https://us-south.ml.cloud.ibm.com'
+const DEFAULT_NAME = 'untitled-project'
 const DEFAULT_REGION = 'us-geo'
-const DEFAULT_BUCKET = '<BUCKET_NAME>'
 const DEFAULT_USE_OUTPUT = 'yes'
 const DEFAULT_GPU = 'k80'
 const DEFAULT_STEPS = '500'
 const DEFAULT_SAVE = 'yes'
 
+const CONFIG = {
+  name: '',
+  credentials: { wml: {}, cos: {} },
+  buckets: { training: '' },
+  trainingParams: {}
+}
+
 module.exports = async (options, skipOptionalSteps) => {
+  // Parse help options.
   const parser = optionsParse()
   parser.add([true, 'help', '--help', '-h'])
   const ops = parser.parse(options)
 
+  // If help was an option, print usage and exit.
   if (ops.help) {
     console.log('cacli init')
     process.exit()
   }
 
-  const old = (() => {
-    try {
-      return yaml.safeLoad(fs.readFileSync('config.yaml'))
-    } catch {}
-  })()
-  const config = {}
-  config.name = ''
-  config.credentials = {}
-  config.credentials.wml = {}
-  config.credentials.cos = {}
-  config.buckets = {}
-  config.trainingParams = {}
+  // Load config if one exists.
+  const old = safeGet(() => yaml.safeLoad(fs.readFileSync('config.yaml')))
 
   if (!skipOptionalSteps) {
     console.log(
-      'This utility will walk you through creating a config.yaml file.'
+      dim('This utility will walk you through creating a config.yaml file.')
     )
     console.log(
-      'It only covers the most common items, and tries to guess sensible defaults.'
+      dim(
+        'It only covers the most common items, and tries to guess sensible defaults.'
+      )
     )
     console.log()
   }
@@ -80,81 +71,161 @@ module.exports = async (options, skipOptionalSteps) => {
   // Watson Machine Learning Credentials
   console.log(bold('Watson Machine Learning Credentials'))
   const instance_id = safeGet(() => old.credentials.wml.instance_id)
-  config.credentials.wml.instance_id = await input('instance_id: ', instance_id)
+  CONFIG.credentials.wml.instance_id = await input('instance_id: ', instance_id)
   const username = safeGet(() => old.credentials.wml.username)
-  config.credentials.wml.username = await input('username: ', username)
+  CONFIG.credentials.wml.username = await input('username: ', username)
   const password = safeGet(() => old.credentials.wml.password)
-  config.credentials.wml.password = await input('password: ', password)
-  const url = safeGet(() => old.credentials.wml.url, DEFAULT_URL)
-  config.credentials.wml.url = await input(`url: `, url)
+  CONFIG.credentials.wml.password = await input('password: ', password)
+  const url = safeGet(() => old.credentials.wml.url)
+  CONFIG.credentials.wml.url = await input('url: ', url)
   console.log()
+
+  try {
+    await new WML(CONFIG).authenticate()
+  } catch (e) {
+    console.warn(
+      `${yellow(
+        'warning'
+      )} The provided Watson Machine Learning credentials are invalid.\n`
+    )
+  }
 
   // Cloud Object Storage Credentials
   console.log(bold('Cloud Object Storage Credentials'))
   const access_key_id = safeGet(() => old.credentials.cos.access_key_id)
-  config.credentials.cos.access_key_id = await input(
+  CONFIG.credentials.cos.access_key_id = await input(
     'access_key_id: ',
     access_key_id
   )
   const secret_access_key = safeGet(() => old.credentials.cos.secret_access_key)
-  config.credentials.cos.secret_access_key = await input(
+  CONFIG.credentials.cos.secret_access_key = await input(
     'secret_access_key: ',
     secret_access_key
   )
   const region = safeGet(() => old.credentials.cos.region, DEFAULT_REGION)
-  config.credentials.cos.region = await input(`region: `, region)
+  CONFIG.credentials.cos.region = await input('region: ', region)
   console.log()
 
   // Buckets
-  console.log('loading buckets...')
-  const buckets = await printBuckets(config.credentials.cos)
-  const training = safeGet(() => old.buckets.training)
-  const rawTraining = await input('training data bucket: ', training)
-  config.buckets.training = sanitize(rawTraining, buckets) || DEFAULT_BUCKET
-  console.log()
-  const use_output = stringToBool(
-    await input(
-      `Would you like to store output in a separate bucket? `,
-      DEFAULT_USE_OUTPUT
-    )
-  )
-  await (async () => {
-    if (use_output) {
-      console.log()
-      const output = safeGet(() => old.buckets.output)
-      const rawOutput = await input('output bucket: ', output)
-      config.buckets.output = sanitize(rawOutput, buckets) || DEFAULT_BUCKET
+  const spinner = new Spinner()
+  spinner.setMessage('loading buckets...')
+  spinner.start()
+
+  let buckets
+  try {
+    buckets = await listBuckets(CONFIG.credentials.cos)
+    spinner.stop()
+  } catch (e) {
+    spinner.stop()
+    switch (e.code) {
+      case 'InvalidAccessKeyId':
+        // InvalidAccessKeyId - The AWS Access Key ID you provided does not exist in our records.
+        console.warn(
+          `${yellow(
+            'warning'
+          )} The provided Cloud Object Storage \`access_key_id\` is invalid.`
+        )
+        break
+      case 'CredentialsError':
+        // CredentialsError - Missing credentials in config
+        console.warn(
+          `${yellow(
+            'warning'
+          )} No Cloud Object Storage credentials were provided.`
+        )
+        break
+      case 'SignatureDoesNotMatch':
+        // SignatureDoesNotMatch - The request signature we calculated does not match the signature you provided. Check your AWS Secret Access Key and signing method. For more information, see REST Authentication and SOAP Authentication for details.
+        console.warn(
+          `${yellow(
+            'warning'
+          )} The provided Cloud Object Storage \`secret_access_key\` is invalid.`
+        )
+        break
+      case 'UnknownEndpoint':
+        // UnknownEndpoint - Inaccessible host: `s3-api.XXX.objectstorage.softlayer.net'. This service may not be available in the `us-east-1' region.
+        console.warn(
+          `${yellow(
+            'warning'
+          )} The provided Cloud Object Storage \`region\` is invalid.`
+        )
+        break
+      default:
+        console.warn(`${yellow('warning')} ${e.code} - ${e.message}`)
+        break
     }
-  })()
-  console.log()
+    console.warn(
+      `${yellow(
+        'warning'
+      )} Skipping bucket selection due to invalid authentication.\n`
+    )
+  }
+
+  if (buckets) {
+    const training = safeGet(() => old.buckets.training)
+    const i = Math.max(0, buckets.indexOf(training))
+    CONFIG.buckets.training = await picker(
+      `training data bucket: ${dim('(Use arrow keys)')}`,
+      buckets,
+      {
+        default: i
+      }
+    )
+    console.log(`training data bucket: ${CONFIG.buckets.training}`)
+    console.log()
+    const use_output = stringToBool(
+      await input(
+        'Would you like to store output in a separate bucket? ',
+        DEFAULT_USE_OUTPUT
+      )
+    )
+    await (async () => {
+      if (use_output) {
+        console.log()
+        const output = safeGet(() => old.buckets.output)
+        const i = Math.max(0, buckets.indexOf(output))
+        CONFIG.buckets.output = await picker(
+          `output bucket: ${dim('(Use arrow keys)')}`,
+          buckets,
+          {
+            default: i
+          }
+        )
+        console.log(`output bucket: ${CONFIG.buckets.output}`)
+      }
+    })()
+    console.log()
+  }
 
   // Training Params
   if (!skipOptionalSteps) {
     console.log(bold('Training Params'))
     // Default can end up being '', which won't through a safeGet error.
     const gpu = safeGet(() => old.trainingParams.gpu, DEFAULT_GPU)
-    config.trainingParams.gpu = await input(`gpu: `, gpu || DEFAULT_GPU)
+    CONFIG.trainingParams.gpu = await input('gpu: ', gpu || DEFAULT_GPU)
     const steps = safeGet(() => old.trainingParams.steps, DEFAULT_STEPS)
-    config.trainingParams.steps = await input(`steps: `, steps || DEFAULT_STEPS)
+    CONFIG.trainingParams.steps = await input('steps: ', steps || DEFAULT_STEPS)
     console.log()
   }
 
+  const defaultProjectName = CONFIG.buckets.training || DEFAULT_NAME
+
   // Project name
   if (!skipOptionalSteps) {
-    config.name = await input(`project name: `, config.buckets.training)
+    CONFIG.name = await input('project name: ', defaultProjectName)
     console.log()
   } else {
-    config.name = config.buckets.training
+    CONFIG.name = defaultProjectName
   }
 
   // Write to yaml
   console.log(`About to write to ${process.cwd()}/config.yaml:`)
   console.log()
-  const yamlFile = yaml.safeDump(config)
+  const yamlFile = yaml.safeDump(CONFIG)
   console.log(yamlFile)
-  const save = stringToBool(await input(`Is this ok? `, DEFAULT_SAVE))
+  const save = stringToBool(await input('Is this ok? ', DEFAULT_SAVE))
   if (save) {
     fs.writeFile('config.yaml', yamlFile, () => {})
   }
-  return config
+  return CONFIG
 }

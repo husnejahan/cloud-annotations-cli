@@ -1,4 +1,5 @@
 const readline = require('readline')
+const { cyan } = require('chalk')
 const MuteStream = require('mute-stream')
 const { eraseLines, cursorHide, cursorShow } = require('ansi-escapes')
 
@@ -35,7 +36,17 @@ const handleExit = () => {
   console.log(cursorShow)
 }
 
-module.exports = async (prompt, items, delegate) => {
+module.exports = async (prompt, items, delegate = {}) => {
+  delegate.windowSize = delegate.windowSize || 11
+  let index = delegate.default || 0
+  delegate.renderItem =
+    delegate.renderItem ||
+    ((item, selected) => {
+      if (selected) {
+        return cyan.bold(`❯ ${item}`)
+      }
+      return `  ${item}`
+    })
   delegate.windowSize = Math.min(delegate.windowSize, items.length)
 
   console.log(prompt)
@@ -50,13 +61,13 @@ module.exports = async (prompt, items, delegate) => {
     output
   })
 
-  let index = 0
   renderItems(items, delegate, index)
 
   process.stdout.write(cursorHide)
   rl.output.mute()
+
   const answer = await new Promise((resolve, _) => {
-    rl.input.on('keypress', (_, key) => {
+    const handleKeyPress = (_, key) => {
       if (key.name === 'up') {
         index = Math.max(0, index - 1)
         process.stdout.write(eraseLines(delegate.windowSize))
@@ -67,13 +78,16 @@ module.exports = async (prompt, items, delegate) => {
         renderItems(items, delegate, index)
       } else if (key.name === 'return') {
         resolve(index)
+        rl.input.removeListener('keypress', handleKeyPress)
         rl.pause()
       }
-    })
+    }
+    rl.input.on('keypress', handleKeyPress)
   })
-  process.stdout.write(eraseLines(delegate.windowSize))
+  process.stdout.write(eraseLines(delegate.windowSize + 1))
   process.stdout.write(cursorShow)
   rl.output.unmute()
+  rl.close()
   process.removeListener('exit', handleExit)
   return items[answer]
 }
