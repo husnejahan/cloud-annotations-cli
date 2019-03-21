@@ -1,4 +1,4 @@
-const { dim, bold, red } = require('chalk')
+const { dim, bold, red, green } = require('chalk')
 const yaml = require('js-yaml')
 const COS = require('ibm-cos-sdk')
 const fs = require('fs')
@@ -112,9 +112,13 @@ module.exports = async options => {
 
   await validateConfig(config)
 
-  console.log('Starting training run...')
+  const spinner = new Spinner()
+  spinner.setMessage('Starting training run...')
+  spinner.start()
   const trainingRun = WML.trainingRunBuilder(config)
   const modelId = await trainingRun.start()
+  spinner.stop()
+  console.log(`${green('success')} Training run submitted.`)
   console.log()
 
   console.log('Model ID:')
