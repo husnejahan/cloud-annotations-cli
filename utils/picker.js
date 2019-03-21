@@ -67,7 +67,7 @@ module.exports = async (prompt, items, delegate = {}) => {
   rl.output.mute()
 
   const answer = await new Promise((resolve, _) => {
-    const handleKeyPress = (_, key) => {
+    rl.input.on('keypress', (_, key) => {
       if (key.name === 'up') {
         index = Math.max(0, index - 1)
         process.stdout.write(eraseLines(delegate.windowSize))
@@ -78,16 +78,12 @@ module.exports = async (prompt, items, delegate = {}) => {
         renderItems(items, delegate, index)
       } else if (key.name === 'return') {
         resolve(index)
-        rl.input.removeListener('keypress', handleKeyPress)
-        rl.pause()
       }
-    }
-    rl.input.on('keypress', handleKeyPress)
+    })
   })
+  rl.close()
   process.stdout.write(eraseLines(delegate.windowSize + 1))
   process.stdout.write(cursorShow)
-  rl.output.unmute()
-  rl.close()
   process.removeListener('exit', handleExit)
   return items[answer]
 }

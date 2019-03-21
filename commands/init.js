@@ -80,9 +80,15 @@ module.exports = async (options, skipOptionalSteps) => {
   CONFIG.credentials.wml.url = await input('url: ', url)
   console.log()
 
+  const spinner = new Spinner()
+  spinner.setMessage('Authenticating...')
+  spinner.start()
+
   try {
     await new WML(CONFIG).authenticate()
+    spinner.stop()
   } catch (e) {
+    spinner.stop()
     console.warn(
       `${yellow(
         'warning'
@@ -107,8 +113,7 @@ module.exports = async (options, skipOptionalSteps) => {
   console.log()
 
   // Buckets
-  const spinner = new Spinner()
-  spinner.setMessage('loading buckets...')
+  spinner.setMessage('Loading buckets...')
   spinner.start()
 
   let buckets

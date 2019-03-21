@@ -1,15 +1,19 @@
+const readline = require('readline')
+
 module.exports = (prompt, defaultVal) =>
   new Promise((resolve, _) => {
-    process.stdout.write(prompt)
-    if (defaultVal) {
-      process.stdout.write(`(${defaultVal}) `)
-    }
-    process.stdin.resume()
+    const question = prompt + (defaultVal ? `(${defaultVal}) ` : '')
 
-    const onDataListener = function(d) {
-      resolve(d.toString().trim() || defaultVal || '')
-      process.stdin.removeListener('data', onDataListener)
-      process.stdin.pause()
-    }
-    process.stdin.addListener('data', onDataListener)
+    const input = process.stdin
+    const output = process.stdout
+    rl = readline.createInterface({
+      terminal: true,
+      input,
+      output
+    })
+
+    rl.question(question, answer => {
+      resolve(answer.toString().trim() || defaultVal || '')
+      rl.close()
+    })
   })
