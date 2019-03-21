@@ -38,6 +38,8 @@ module.exports = async options => {
     }
   })()
 
+  // TODO: Verify config.
+
   console.log('Starting training run...')
   const trainingRun = WML.trainingRunBuilder(config)
   const modelId = await trainingRun.start()
