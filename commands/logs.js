@@ -1,6 +1,7 @@
-const WML = require('../api/wml')
-const loadConfig = require('../utils/loadConfig')
-const optionsParse = require('../utils/optionsParse')
+const WML = require('./../api/wml')
+const loadConfig = require('./../utils/loadConfig')
+const optionsParse = require('./../utils/optionsParse')
+const cosEndpointBuilder = require('./../utils/cosEndpointBuilder')
 const COS = require('ibm-cos-sdk')
 
 module.exports = async options => {
@@ -49,7 +50,7 @@ module.exports = async options => {
         secret_access_key
       } = config.credentials.cos
       const cosConfig = {
-        endpoint: `https://s3-api.${region}.objectstorage.softlayer.net`,
+        endpoint: cosEndpointBuilder(region, true),
         accessKeyId: access_key_id,
         secretAccessKey: secret_access_key
       }

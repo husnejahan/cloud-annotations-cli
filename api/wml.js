@@ -1,6 +1,7 @@
 const request = require('request-promise-native')
 const WebSocket = require('ws')
 const safeGet = require('./../utils/safeGet')
+const cosEndpointBuilder = require('./../utils/cosEndpointBuilder')
 const fs = require('fs')
 
 const LOCAL_DEV_MODE = false
@@ -146,9 +147,10 @@ class WML {
       this._token = await this.authenticate()
     }
     const connection = {
-      endpoint_url: `https://s3-api.${
-        this._config.credentials.cos.region
-      }.objectstorage.service.networklayer.com`,
+      endpoint_url: cosEndpointBuilder(
+        this._config.credentials.cos.region,
+        false
+      ),
       access_key_id: this._config.credentials.cos.access_key_id,
       secret_access_key: this._config.credentials.cos.secret_access_key
     }

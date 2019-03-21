@@ -7,13 +7,14 @@ const COS = require('ibm-cos-sdk')
 const WML = require('./../api/wml')
 const stringToBool = require('./../utils/stringToBool')
 const optionsParse = require('./../utils/optionsParse')
+const cosEndpointBuilder = require('./../utils/cosEndpointBuilder')
 const Spinner = require('./../utils/spinner')
 const picker = require('./../utils/picker')
 const { eraseLines } = require('ansi-escapes')
 
 async function listBuckets({ region, access_key_id, secret_access_key }) {
   const config = {
-    endpoint: `https://s3-api.${region}.objectstorage.softlayer.net`,
+    endpoint: cosEndpointBuilder(region, true),
     accessKeyId: access_key_id,
     secretAccessKey: secret_access_key
   }
@@ -33,7 +34,7 @@ async function checkRegion(
   bucket
 ) {
   const config = {
-    endpoint: `https://s3-api.${region}.objectstorage.softlayer.net`,
+    endpoint: cosEndpointBuilder(region, true),
     accessKeyId: access_key_id,
     secretAccessKey: secret_access_key
   }
